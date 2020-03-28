@@ -58,6 +58,20 @@ class ProductRepositoryImplTest {
     }
 
     @Test
+    fun insertAll() {
+        runBlocking {
+
+            val testProducts = DataProvider.getProducts(5)
+            productRepository.insertAll(testProducts)
+
+            val cachedProducts = productRepository.getProductsIncart()
+
+            assertEquals(testProducts, cachedProducts)
+        }
+    }
+
+
+    @Test
     fun getCartPrice() {
         runBlocking {
             val testProducts = DataProvider.getProducts(5)
@@ -70,20 +84,14 @@ class ProductRepositoryImplTest {
 
             assert(expectedPrice == price)
 
-        }
-    }
+            // Add another product
+            val testProduct = DataProvider.getProduct(6)
+            productRepository.insert(testProduct)
 
+            val updatePrice = expectedPrice + (testProduct.quantity * testProduct.price)
 
-    @Test
-    fun insertAll() {
-        runBlocking {
+            assert(updatePrice == productRepository.getCartPriceFlow().take(1).toList()[0])
 
-            val testProducts = DataProvider.getProducts(5)
-            productRepository.insertAll(testProducts)
-
-            val cachedProducts = productRepository.getProductsIncart()
-
-            assertEquals(testProducts, cachedProducts)
         }
     }
 

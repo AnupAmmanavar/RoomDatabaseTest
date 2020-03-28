@@ -10,26 +10,5 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun productDao(): ProductDao
 
-    companion object {
-        private var INSTANCE: AppDatabase? = null
-        private val lock = Any()
-
-        fun getInstance(context: Context): AppDatabase {
-            if (INSTANCE == null) {
-                synchronized(lock) {
-                    if (INSTANCE == null) {
-                        INSTANCE = Room.databaseBuilder(
-                            context.applicationContext,
-                            AppDatabase::class.java,
-                            "projects.db"
-                        )
-                            .build()
-                    }
-                    return INSTANCE as AppDatabase
-                }
-            }
-            return INSTANCE as AppDatabase
-        }
-
-    }
+    abstract fun rxProductDao(): RxProductDao
 }
