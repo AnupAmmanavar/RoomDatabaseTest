@@ -209,7 +209,7 @@ class CoroutinesProductDaoTest {
 }
 ```
 
-## Using Android’s Architecture components LiveData
+## 3. Using Android’s Architecture components LiveData
 * Inserting and Fetching the products are normal functions. Make sure to run it off the main thread.
 * Cart Amount which is a stream of data is declared as a `LiveData`.
 
