@@ -48,7 +48,7 @@ interface RxProductDao {
 }
 ```
 
-### Testing in RxJava
+### Overview of testing in RxJava
 RxJava test utils provides a `.test()` method. It creates a `TestObserver` on the data source and subscribes to it. Thus, on subscription, you get the value from the data source immediately and consequently, you can check the value. Below example makes it clear
 
 
@@ -139,7 +139,7 @@ interface CoroutinesProductDao {
 }
 ```
 
-### Testing in Room-ktx
+### Overview of testing using Room-ktx
 `runBlocking` runs a new coroutine and blocks the current thread interruptible until its completion. Hence all the tests should be encapsulated inside this block which ensures that the tests run to completion.
 
 #### Testing one-shot operation
@@ -228,7 +228,7 @@ interface ProductDaoAAC {
 }
 ```
 
-### Testing LiveData
+### Overview of Testing LiveData
 * For one-shot operation make a normal call, making sure to run off the main thread.
 * For a stream of data, we need to subscribe to live data. Because it won’t emit the values unless there are active observers on it. We have an extension function called `getOrAwait()` on the `LiveData` which gives us the value of the LiveData instantaneously. It’s borrowed from (here)[https://github.com/android/architecture-components-samples/blob/master/GithubBrowserSample/app/src/test-common/java/com/android/example/github/util/LiveDataTestUtil.kt].
 
