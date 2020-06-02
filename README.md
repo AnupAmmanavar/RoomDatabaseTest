@@ -115,4 +115,169 @@ class RxProductDaoTest {
 }
 ```
 
+## 2. Room database using Coroutines
+Room has support for coroutines. They run on the custom dispatcher. Coroutines are famous for their sequential nature. But the only condition being the functions have to be `suspend` function.
+
+### Creating DAO(Data access object)
+* One-shot operation of fetching the products is a `suspend` function.
+* Cart amount which is stream-of-data is declared as `Flow` of Double.
+
+```kotlin
+@Dao
+interface CoroutinesProductDao {
+
+    @Insert
+    suspend fun insertAll(products: List<Product>)
+
+    // One shot operation
+    @Query("select * from product")
+    suspend fun getProductsInCart(): List<Product>
+
+    // Stream of data
+    @Query("select SUM( quantity * price ) from product")
+    fun getCartAmount(): Flow<Double>
+}
+```
+
+### Testing in Room-ktx
+`runBlocking` runs a new coroutine and blocks the current thread interruptible until its completion. Hence all the tests should be encapsulated inside this block which ensures that the tests run to completion.
+
+#### Testing one-shot operation
+```kotlin
+class CoroutinesProductDaoTest {
+
+    private lateinit var productRepository: CoroutinesProductDao
+    ..
+    ..
+
+    @Test
+    fun insertAll() {
+        runBlocking {
+            // 1. create 5 test products and insert them in the repository
+            val testProducts = DataProvider.getProducts(5)
+            productRepository.insertAll(testProducts)
+
+            // 2. Fetch the products from the repository
+            val cachedProducts = productRepository.getProductsIncart()
+
+            // 3. Check whether the fetched and expected products are equal
+            assertEquals(testProducts, cachedProducts)
+        }
+    }
+
+}
+```
+
+#### Testing stream of Data
+
+```kotlin
+class CoroutinesProductDaoTest {
+
+    private lateinit var productRepository: CoroutinesProductDao
+    ..
+    ..
+
+
+    @Test
+    fun getCartPrice() {
+        runBlocking {
+            // 1. create 5 test products and insert them in the repository
+            val testProducts = DataProvider.getProducts(5)
+            productRepository.insertAll(testProducts)
+
+            // 2. Calculate the expected price
+            var expectedPrice = 0.0
+            testProducts.forEach { expectedPrice += it.price * it.quantity }
+
+            // 3. Fetch the expected price and check whether it matches the expected value
+            val price = productRepository.getCartPriceFlow().take(1).toList()[0]
+            assert(expectedPrice == price)
+
+            // 4. Add another product
+            val testProduct = DataProvider.getProduct(6)
+            productRepository.insert(testProduct)
+
+            // 5. Calculate the expected price
+            val updatePrice = expectedPrice + (testProduct.quantity * testProduct.price)
+
+            // 6. Check the expected and actual value
+            assert(updatePrice == productRepository.getCartPriceFlow().take(1).toList()[0])
+
+        }
+    }
+
+}
+```
+
+## Using Android’s Architecture components LiveData
+* Inserting and Fetching the products are normal functions. Make sure to run it off the main thread.
+* Cart Amount which is a stream of data is declared as a `LiveData`.
+
+```kotlin
+@Dao
+interface ProductDaoAAC {
+
+    @Insert
+    fun insertAll(products: List<Product>)
+
+    @Query("select * from product")
+    fun getProductsInCart(): List<Product>
+
+    @Query("select SUM( quantity * price ) from product")
+    fun getCartAmount(): LiveData<Double>
+}
+```
+
+### Testing LiveData
+* For one-shot operation make a normal call, making sure to run off the main thread.
+* For a stream of data, we need to subscribe to live data. Because it won’t emit the values unless there are active observers on it. We have an extension function called `getOrAwait()` on the `LiveData` which gives us the value of the LiveData instantaneously. It’s borrowed from (here)[https://github.com/android/architecture-components-samples/blob/master/GithubBrowserSample/app/src/test-common/java/com/android/example/github/util/LiveDataTestUtil.kt].
+
+```kotlin
+class ProductRepositoryAACImplTest { 
+
+  lateinit var repository: ProductDaoAAC
+  ..
+  ..
+  
+  @Test
+    fun getCartAmountLiveDataTest() {
+    
+        // 1. create 5 test products and insert them in the repository
+        val testProducts = DataProvider.getProducts(5)
+        repository.insertAll(testProducts)
+
+        //  2. Calculate the expected price
+        var expectedPrice = 0.0
+        testProducts.forEach { expectedPrice += it.price * it.quantity }
+
+        // 3. Fetch the expected price and check whether it matches the expected value
+        // getOrAwait() extension function returns us the value by providing a test active subscriber
+        var price = repository.getCartPriceLiveData().getOrAwaitValue()
+        assertEquals(expectedPrice, price, 0.0)
+
+        // 4. Add another product
+        val anotherProduct = DataProvider.getProduct(6)
+        repository.insert(anotherProduct)
+
+        // 5. Calculate the expected price
+        expectedPrice += anotherProduct.price * anotherProduct.quantity
+
+        // 6. Fetch the Cart amount again. And check the expected and actual value
+        price = repository.getCartPriceLiveData().getOrAwaitValue()
+        
+        assertEquals(expectedPrice, price, 0.0)
+
+    }
+
+}
+```
+
+
+
+
+
+
+
+
+
 
