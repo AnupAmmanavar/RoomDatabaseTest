@@ -1,4 +1,4 @@
-package com.kinley.repository.rx
+package com.kinley.repository
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider

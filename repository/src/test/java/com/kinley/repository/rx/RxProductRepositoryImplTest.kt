@@ -1,6 +1,7 @@
 package com.kinley.repository.rx
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import com.kinley.repository.RoomTestRule
 import com.kinley.repository.datafactory.DataProvider
 import com.kinley.repository.db.AppDatabase
 import org.junit.Before
